@@ -26,6 +26,7 @@ namespace API.Services.Implements
         private readonly ICommentService _commentService;
         private readonly IBillService _billService;
         private readonly INotificationService _notificationService;
+        private readonly IVehicleService _vehicleService;
 
         public ItemService(BuildingContext context,
             IImageService imageService,
@@ -34,7 +35,8 @@ namespace API.Services.Implements
             IPhotoService photoService,
             ICommentService commentService,
             IBillService billService,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IVehicleService vehicleService)
         {
             _context = context;
             _imageService = imageService;
@@ -44,6 +46,7 @@ namespace API.Services.Implements
             _commentService = commentService;
             _billService = billService;
             _notificationService = notificationService;
+            _vehicleService = vehicleService;
         }
 
         public async Task<BaseResponse> CreateItem(CreateItemRequest request)
@@ -103,7 +106,7 @@ namespace API.Services.Implements
             {
                 var response = _mapper.Map<ItemResponse>(item);
                 response.PictureUrl = new List<string>();
-                foreach (var pic in item.Photos)
+                foreach (var pic in item.ItemPhotos)
                 {
                     response.PictureUrl.Add(pic.Url.ToString());
                 }
@@ -126,7 +129,7 @@ namespace API.Services.Implements
             var query = await _context.Items
                 .Include(i => i.Type)
                 .Include(i => i.Renter)
-                .Include(i => i.Photos)
+                .Include(i => i.ItemPhotos)
                 .Status(EItemStatus.Empty)
                 .Sort(itemParams.OrderBy)
                 .Search(itemParams.SearchTerm)
@@ -167,6 +170,27 @@ namespace API.Services.Implements
             };
         }
 
+        public async Task<DataResponse<PagedList<ItemForSystemResponse>>> GetItemsForAccount(int userId, ItemForSystemParams itemParams)
+        {
+            var query = await _context.Items
+                .Include(i => i.Type)
+                .Include(i => i.Renter)
+                .Include(i => i.ItemPhotos)
+                .Where(i => i.Renter.Id == userId)
+                .ToListAsync();
+            List<ItemForSystemResponse> responses = _mapper.Map<List<ItemForSystemResponse>>(query);
+
+            var items = PagedList<ItemForSystemResponse>.ToPagedList(responses,
+                itemParams.PageNumber, itemParams.PageSize);
+
+
+            return new DataResponse<PagedList<ItemForSystemResponse>>
+            {
+                IsSuccess = true,
+                Data = items
+            };
+        }
+
         public async Task<BaseResponse> AssignUserForItem(int userId, int itemId)
         {
             var renter = await _context.Users.FindAsync(userId);
@@ -181,66 +205,19 @@ namespace API.Services.Implements
             {
                 item.Renter = renter;
                 item.RentedDate = DateTime.Today;
+                item.MonthlyPaiedDate = DateTime.Today;
+                item.MonthlyPaied = true;
+                item.Status = EItemStatus.Rented;
                 renter.NumberOfParent = rentRequest.NumberOfParent;
                 rentRequest.status = true;
             }
-            var bill = _billService.createBill(userId, itemId, "Thanh toán yêu cầu thuê", item.Price, 0, 0, 0, 0);
-            _context.Bills.Add(bill);
             if (await _context.SaveChangesAsync() > 0)
             {
-                await _emailService.SendEmailAsync(renter.Email, "ConfirmMemberEmail", $"<html><body><p>Chào {renter.UserName},</p><p>Vui lòng kiểm thanh toán tiền thuê và đăng ký thông tin các thành viên</p></body></html>");
+                await _emailService.SendEmailAsync(renter.Email, "Rent Successful", $"<html><body><p>Chào {renter.UserName},</p><p>Ban da nhan duoc phong cua minh</p></body></html>");
 
                 return new BaseResponse { IsSuccess = true, Message = "Chỉ định thành công" };
             }
             return new BaseResponse { IsSuccess = false, Message = "Chỉ định thất bại" };
-        }
-
-        public async Task<DataResponse<PagedList<ItemUnpaiedResponse>>> GetUnpaiedItems(PaginationParams itemParams)
-        {
-            var query = await _context.Items
-                .Include(i => i.Renter)
-                .Where(i => i.MonthlyPaied == false && i.Status == EItemStatus.Rented && i.Renter != null)
-                .ToListAsync();
-            var responses = _mapper.Map<List<ItemUnpaiedResponse>>(query);
-            for (int i = 0; i < responses.Count(); i++)
-            {
-                int lated = DateTime.Now.Day - query[i].RentedDate.Value.Day;
-                responses[i].LatedDay = lated;
-            }
-            var items = PagedList<ItemUnpaiedResponse>.ToPagedList(responses,
-                itemParams.PageNumber, itemParams.PageSize);
-            return new DataResponse<PagedList<ItemUnpaiedResponse>>
-            {
-                IsSuccess = true,
-                Data = items
-            };
-        }
-
-        public async Task<BaseResponse> SendMonthlyBillForUser()
-        {
-            var items = await _context.Items
-                .Include(i => i.Renter)
-                .Where(i => i.Status == EItemStatus.Rented && i.Renter != null
-                    && i.RentedDate.Value.Day == DateTime.Now.Day
-                    && (i.RentedDate.Value.Month < DateTime.Now.Month || i.RentedDate.Value.Year < DateTime.Now.Year))
-                .ToListAsync();
-
-            foreach (var item in items)
-            {
-                item.MonthlyPaied = false;
-                var bill = _billService.createBill(item.Renter.Id, item.Id, "Tiền hàng tháng", item.Price, 0, 0, 0, 0);
-                var notification = await _notificationService.CreateNotification("Tiền hàng tháng", $"Bạn cần thanh toán số tiền :{item.Price}", item.Renter.Id);
-                _context.Bills.Add(bill);
-                _context.Notifications.Add(notification);
-
-                if (await _context.SaveChangesAsync() > 0)
-                {
-                    await _emailService.SendEmailAsync(item.Renter.Email, "Tiền thuê hàng tháng", "Bạn cần đóng tiền thuê trong vòng 7 ngày từ hôm nay");
-                    return new BaseResponse { IsSuccess = true, Message = "Gửi thông báo thành công" };
-                }
-            }
-            return new BaseResponse { IsSuccess = false, Message = "Thất bại" };
-
         }
 
         public async Task<DataResponse<PagedList<ItemForAdminResponse>>> GetItemsForAdmin(ItemForAdminParams itemParams)
@@ -248,7 +225,7 @@ namespace API.Services.Implements
             var query = await _context.Items
                 .Include(i => i.Type)
                 .Include(i => i.Renter)
-                .Include(i => i.Photos)
+                .Include(i => i.ItemPhotos)
                 .Status(itemParams.Status)
                 .Sort(itemParams.OrderBy)
                 .Search(itemParams.SearchTerm)
@@ -268,7 +245,7 @@ namespace API.Services.Implements
         {
             var item = await _context.Items
                 .Include(i => i.Type)
-                .Include(i=>i.Renter)
+                .Include(i => i.Renter)
                 .FirstOrDefaultAsync(i => i.Id == id);
             if (item == null)
                 return new DataResponse<ItemDetailForAdminResponse>
@@ -295,6 +272,7 @@ namespace API.Services.Implements
                 .Include(i => i.Renter)
                 .FirstOrDefaultAsync(i => i.Id == itemId);
             var unRentRequest = await _context.UnRentRequests.FirstOrDefaultAsync(i => i.ItemId == itemId && i.RenterId == renter.Id);
+            var vehicles = await _context.Vehicles.Where(v => v.AccountId == renter.Id).ToListAsync();
             if (unRentRequest == null || item == null || unRentRequest == null)
                 return new BaseResponse { IsSuccess = false, Message = "Chỉ định thất bại" };
 
@@ -307,6 +285,11 @@ namespace API.Services.Implements
             {
                 _context.Members.Remove(member);
             }
+            foreach (var vehicle in vehicles)
+            {
+                _context.Vehicles.Remove(vehicle);
+            }
+
             renter.NumberOfParent = 0;
             renter.Members = null;
 
@@ -325,13 +308,74 @@ namespace API.Services.Implements
             return new BaseResponse { IsSuccess = false, Message = "Chỉ định thất bại" };
         }
 
+        public async Task<DataResponse<PagedList<ItemUnpaiedResponse>>> GetUnpaiedItems(PaginationParams itemParams)
+        {
+            var query = await _context.Items
+                .Include(i => i.Renter)
+                .Where(i => i.Status == EItemStatus.Rented
+                    && i.Renter != null
+                    && (i.MonthlyPaied == false || (
+                        (
+                            (i.RentedDate.Value.Day > DateTime.Today.Day) && (DateTime.Today.Month - i.RentedDate.Value.Month == 2)
+                        ) ||
+                        (
+                            (i.RentedDate.Value.Day <= DateTime.Today.Day) && (DateTime.Today.Month - i.RentedDate.Value.Month == 1)
+                        )
+                        && (i.RentedDate.Value.Year <= DateTime.Today.Year)
+                        )
+                    ))
+                .ToListAsync();
+            var responses = _mapper.Map<List<ItemUnpaiedResponse>>(query);
+            for (int i = 0; i < responses.Count(); i++)
+            {
+                int lated = (DateTime.Now - query[i].MonthlyPaiedDate.Value).Days - DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month);
+                responses[i].LatedDay = lated;
+                query[i].MonthlyPaied = false;
+            }
+            await _context.SaveChangesAsync();
+            var items = PagedList<ItemUnpaiedResponse>.ToPagedList(responses,
+                itemParams.PageNumber, itemParams.PageSize);
+            return new DataResponse<PagedList<ItemUnpaiedResponse>>
+            {
+                IsSuccess = true,
+                Data = items
+            };
+        }
+
+        public async Task<BaseResponse> SendMonthlyBillForUser(int itemId, CreateMonthlyBillRequest request)
+        {
+            var item = await _context.Items
+                .Include(i => i.Renter)
+                .Where(i => i.MonthlyPaied == false && i.Status == EItemStatus.Rented && i.Renter != null)
+                .FirstOrDefaultAsync(i => i.Id == itemId);
+            if (item == null) return new BaseResponse { IsSuccess = false, Message = "Thất bại" };
+            var electricBill = await _imageService.AddImageAsync(request.ElectricBillUrl);
+            var waterBill = await _imageService.AddImageAsync(request.WaterBillUrl);
+
+            var bill = _billService.createBill(item.Renter.Id, item.Id, "Hóa đơn hàng tháng", item.Price,
+                request.ElectricPrice, electricBill.SecureUrl.ToString(), request.WaterPrice, waterBill.SecureUrl.ToString(), request.VehiclePrice, request.OtherPrice);
+            var notification = await _notificationService.CreateNotification("Tiền hàng tháng", $"Bạn cần thanh toán số tiền :{bill.SumPrice()}", item.Renter.Id);
+
+            _context.Bills.Add(bill);
+            _context.Notifications.Add(notification);
+
+            if (await _context.SaveChangesAsync() > 0)
+            {
+                await _emailService.SendEmailAsync(item.Renter.Email, "Tiền thuê hàng tháng", $"Bạn cần đóng tiền thuê trong vòng 7 ngày từ hôm nay.\n Mã hóa đơn của bạn là {bill.Id}");
+                return new BaseResponse { IsSuccess = true, Message = "Gửi thông báo thành công" };
+            }
+
+            return new BaseResponse { IsSuccess = false, Message = "Thất bại" };
+
+        }
+
         /*------------Private Function------------*/
         private async Task<DataResponse<Item>> checkEditRequest(int id, EditItemRequest request)
         {
             var item = await _context.Items
                 .Include(i => i.Type)
                 .Include(i => i.Renter)
-                .Include(i => i.Photos)
+                .Include(i => i.ItemPhotos)
                 .FirstOrDefaultAsync(i => i.Id == id);
             if (item == null)
                 return new DataResponse<Item>
@@ -360,14 +404,14 @@ namespace API.Services.Implements
         {
             if (imageUrl != null)
             {
-                if (item.Photos != null)
+                if (item.ItemPhotos != null)
                 {
-                    foreach (var photo in item.Photos)
+                    foreach (var photo in item.ItemPhotos)
                     {
                         await _imageService.DeleteMediaAsync(photo.PublicId);
                     }
                 }
-                item.Photos = new List<Photo>();
+                item.ItemPhotos = new List<ItemPhoto>();
                 foreach (var img in imageUrl)
                 {
                     var imageResult = await _imageService.AddImageAsync(img);
@@ -377,8 +421,8 @@ namespace API.Services.Implements
                             IsSuccess = false,
                             Message = "Lỗi tải hình ảnh"
                         };
-                    var photo = new Photo { PublicId = imageResult.PublicId, Url = imageResult.SecureUrl.ToString(), Item = item, ItemId = item.Id };
-                    item.Photos.Add(photo);
+                    var photo = new ItemPhoto { PublicId = imageResult.PublicId, Url = imageResult.SecureUrl.ToString(), Item = item, ItemId = item.Id };
+                    item.ItemPhotos.Add(photo);
                 }
             }
             if (videoUrl != null)
@@ -429,17 +473,15 @@ namespace API.Services.Implements
         {
             if (!string.IsNullOrEmpty(item.VideoId))
                 await _imageService.DeleteMediaAsync(item.VideoId);
-            if (item.Photos != null)
+            if (item.ItemPhotos != null)
             {
-                foreach (var photo in item.Photos)
+                foreach (var photo in item.ItemPhotos)
                 {
                     await _imageService.DeleteMediaAsync(photo.PublicId);
-                    _context.Photos.Remove(photo);
+                    _context.ItemPhotos.Remove(photo);
                     await _context.SaveChangesAsync();
                 }
             }
         }
-
-
     }
 }

@@ -202,19 +202,19 @@ namespace API.Services.Implements
         public async Task<ProfileResponse> GetProfile(string name)
         {
             var user = await _context.Users
-                    .Include(a => a.Members)
-                    .ThenInclude(m => m.PlaceOfOrigin)
-                    .Include(a => a.Bills)
-                    .Include(a => a.Items)
-                    .Include(a => a.Vehicles)
+                    //.Include(a => a.Members)
+                    //.ThenInclude(m => m.PlaceOfOrigin)
+                    //.Include(a => a.Bills)
+                    //.Include(a => a.Items)
+                    //.Include(a => a.Vehicles)
                     .FirstOrDefaultAsync(x => x.UserName == name);
             if (user == null) return null;
             var response = _mapper.Map<ProfileResponse>(user);
-            response.Members = _mapper.Map<List<PersonResponse>>(user.Members);
-            foreach (var item in user.Items)
-            {
-                response.ItemIds.Add(item.Id);
-            }
+            //response.Members = _mapper.Map<List<PersonResponse>>(user.Members);
+            //foreach (var item in user.Items)
+            //{
+            //    response.ItemIds.Add(item.Id);
+            //}
 
             return response;
 
@@ -275,6 +275,8 @@ namespace API.Services.Implements
         public async Task<BaseResponse> BanMemberAccount(int userId)
         {
             var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return new BaseResponse { IsSuccess = false, Message = "Không tìm thấy tài khoản có Id: " + userId };
             var roles = new List<string>();
             if (user != null)
                 roles = (await _userManager.GetRolesAsync(user)).ToList();

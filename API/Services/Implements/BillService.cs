@@ -25,15 +25,18 @@ namespace API.Services.Implements
             _mapper = mapper;
         }
 
-        public Bill createBill(int userId, int itemId, string title, int itemPrice, int electricPrice, int waterPrice, int vehiclePrice, int otherPrice)
+        public Bill createBill(int userId, int itemId, string title, int itemPrice, int electricPrice, string electricBillUrl, int waterPrice, string waterBillUrl, int vehiclePrice, int otherPrice)
         {
             return new Bill
             {
                 AccountId = userId,
+                Account = _context.Users.Find(userId),
                 ItemId = itemId,
                 ItemPrice = itemPrice,
                 ElectricPrice = electricPrice,
+                ElectricBillUrl = electricBillUrl,
                 WaterPrice = waterPrice,
+                WaterBillUrl = waterBillUrl,
                 VehiclePrice = vehiclePrice,
                 OtherPrice = otherPrice,
                 Paied = false,
@@ -43,20 +46,41 @@ namespace API.Services.Implements
         }
 
 
-        public async Task<DataResponse<PagedList<BillForAdminResponse>>> GetBillsByAdmin(BillForAdminParam param)
+        public async Task<DataResponse<PagedList<BillResponse>>> GetBillsByAdmin(BillForAdminParam param)
         {
             var query = await _context.Bills
+                .Include(b => b.Account)
                 .Paied(param.Paied)
                 .Account(param.AccountId)
                 .Item(param.ItemId)
                 .Bill(param.BillId)
                 .ToListAsync();
-            var bills = _mapper.Map<List<BillForAdminResponse>>(query);
+            var bills = _mapper.Map<List<BillResponse>>(query);
 
-            var response = PagedList<BillForAdminResponse>.ToPagedList(bills,
+            var response = PagedList<BillResponse>.ToPagedList(bills,
                 param.PageNumber, param.PageSize);
 
-            return new DataResponse<PagedList<BillForAdminResponse>>
+            return new DataResponse<PagedList<BillResponse>>
+            {
+                IsSuccess = true,
+                Data = response
+            };
+        }
+
+        public async Task<DataResponse<PagedList<BillResponse>>> GetBillsByUser(int userId,BillForAccountParams param)
+        {
+            var query = await _context.Bills
+                .Include(b => b.Account)
+                .Where(b => b.AccountId == userId)
+                .Paied(param.Paied)
+                .Bill(param.BillId)
+                .ToListAsync();
+            var bills = _mapper.Map<List<BillResponse>>(query);
+
+            var response = PagedList<BillResponse>.ToPagedList(bills,
+                param.PageNumber, param.PageSize);
+
+            return new DataResponse<PagedList<BillResponse>>
             {
                 IsSuccess = true,
                 Data = response

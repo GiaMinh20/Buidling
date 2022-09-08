@@ -16,15 +16,12 @@ namespace API.Services.Implements
     {
         private readonly IConfiguration _config;
         private readonly BuildingContext _context;
-        private readonly IEmailService _emailService;
 
         public PaymentService(IConfiguration config,
-            BuildingContext context,
-            IEmailService emailService)
+            BuildingContext context)
         {
             _config = config;
             _context = context;
-            _emailService = emailService;
         }
 
         public async Task<DataResponse<PaymentResponse>> PayRentMoney(int userId, PayRentMoney payRentMoney)
@@ -33,14 +30,15 @@ namespace API.Services.Implements
             if (bill == null)
                 return new DataResponse<PaymentResponse> { IsSuccess = false, Message = "Không tìm thấy hóa đơn" };
             var item = await _context.Items.FirstOrDefaultAsync(i => i.Id == bill.ItemId);
-            var payRs = await PayAsync(payRentMoney.CardNumber, payRentMoney.Month, payRentMoney.Year, payRentMoney.CVC, payRentMoney.Name, bill.SumPrice(), bill.Title);
+            var payRs = await PayAsync(payRentMoney.CardNumber, payRentMoney.Month, payRentMoney.Year, payRentMoney.CVC, $"Thanh toán hóa đơn {bill.Id}", bill.SumPrice(), bill.Title);
             if (!payRs.IsSuccess)
                 return new DataResponse<PaymentResponse> { IsSuccess = false, Message = "Thanh toán thất bại" };
             item.Status = EItemStatus.Rented;
             item.MonthlyPaied = true;
+            item.MonthlyPaiedDate = DateTime.Now;
             bill.Paied = true;
             bill.DatePaied = DateTime.Now;
-            if (await _context.SaveChangesAsync() > 0)
+            if (await _context.SaveChangesAsync() > 0) 
             {
                 var rs = new PaymentResponse
                 {
@@ -50,6 +48,7 @@ namespace API.Services.Implements
                     WaterPrice = bill.WaterPrice,
                     VehiclePrice = bill.VehiclePrice,
                     OtherPrice = bill.OtherPrice,
+                    TotalPrice = bill.SumPrice(),
                     ItemId = item.Id,
                     Title = bill.Title,
                     Time = DateTime.Now
@@ -80,7 +79,7 @@ namespace API.Services.Implements
                 Token stripetoken = await servicetoken.CreateAsync(optionstoken);
                 var options = new ChargeCreateOptions
                 {
-                    Amount = amount,
+                    Amount = amount * 100,
                     Currency = "usd",
                     Description = description,
                     Source = stripetoken.Id

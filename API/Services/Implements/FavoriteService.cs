@@ -64,7 +64,7 @@ namespace API.Services.Implements
             return new ListDataResponse<ItemForFavoriteResponse>
             {
                 IsSuccess = true,
-                Datas = _mapper.Map<List<ItemForFavoriteResponse>>(favorite.Items.ToList())
+                Datas = favorite != null ? _mapper.Map<List<ItemForFavoriteResponse>>(favorite.Items.ToList()) : null
             };
         }
     }

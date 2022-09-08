@@ -70,11 +70,31 @@ namespace API.Services.Implements
         public async Task<BaseResponse> AcceptVehicle(int vehicleId)
         {
             var vehicle = await _context.Vehicles.FindAsync(vehicleId);
+            if (vehicle == null)
+                return new BaseResponse { IsSuccess = false, Message = "Không tìm thấy phương tiện" };
             vehicle.Status = true;
-            //_context.Vehicles.Update(vehicle);
             if (await _context.SaveChangesAsync() > 0)
                 return new BaseResponse { IsSuccess = true, Message = "Chấp nhận thành công" };
             return new BaseResponse { IsSuccess = false, Message = "Chấp nhận thất bại" };
+        }
+
+        public async Task<DataResponse<PagedList<Vehicle>>> GetVehiclesOfAccount(int userId, VehicleForAccountParams param)
+        {
+            var query = await _context.Vehicles
+                .Where(v => v.AccountId == userId)
+                .LicensePlates(param.LicensePlates)
+                .Transportation(param.Transportation)
+                .Status(param.Status)
+                .ToListAsync();
+
+            var responses = PagedList<Vehicle>.ToPagedList(query,
+                param.PageNumber, param.PageSize);
+
+            return new DataResponse<PagedList<Vehicle>>
+            {
+                IsSuccess = true,
+                Data = responses
+            };
         }
     }
 }

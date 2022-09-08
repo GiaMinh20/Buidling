@@ -11,5 +11,6 @@ namespace API.Services.Interfaces
         Task<BaseResponse> SendVehicleRequest(int userId, CreateVehicleRequest request);
         Task<DataResponse<PagedList<Vehicle>>> GetVehicles(VehicleParams param);
         Task<BaseResponse> AcceptVehicle(int vehicleId);
+        Task<DataResponse<PagedList<Vehicle>>> GetVehiclesOfAccount(int userId, VehicleForAccountParams param);
     }
 }

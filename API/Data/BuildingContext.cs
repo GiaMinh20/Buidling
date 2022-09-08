@@ -15,7 +15,7 @@ namespace API.Data
         public DbSet<Item> Items { get; set; }
         public DbSet<Member> Members { get; set; }
         public DbSet<Notification> Notifications { get; set; }
-        public DbSet<Photo> Photos { get; set; }
+        public DbSet<ItemPhoto> ItemPhotos { get; set; }
         public DbSet<RentRequest> RentRequests { get; set; }
         public DbSet<UnRentRequest> UnRentRequests { get; set; }
         public DbSet<ReportBuilding> ReportBuildings { get; set; }
@@ -42,11 +42,11 @@ namespace API.Data
                 .HasForeignKey<UserAddress>(a => a.Id)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<Item>()
-                .HasOne(a => a.Photos)
-                .WithOne()
-                .HasForeignKey<Photo>(a => a.Id)
-                .OnDelete(DeleteBehavior.Cascade);
+            //builder.Entity<Item>()
+            //    .HasOne(a => a.ItemPhotos)
+            //    .WithOne()
+            //    .HasForeignKey<ItemPhoto>(a => a.Id)
+            //    .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<TypeItem>()
                 .HasIndex(i => i.Name).IsUnique();

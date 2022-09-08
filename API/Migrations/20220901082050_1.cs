@@ -8,28 +8,6 @@ namespace API.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "IdentityUser",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "TEXT", nullable: false),
-                    UserName = table.Column<string>(type: "TEXT", nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "TEXT", nullable: true),
-                    Email = table.Column<string>(type: "TEXT", nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "TEXT", nullable: true),
-                    EmailConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
-                    PasswordHash = table.Column<string>(type: "TEXT", nullable: true),
-                    SecurityStamp = table.Column<string>(type: "TEXT", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "TEXT", nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
-                    LockoutEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_IdentityUser", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "RentRequests",
                 columns: table => new
                 {
@@ -155,7 +133,9 @@ namespace API.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     ItemPrice = table.Column<int>(type: "INTEGER", nullable: false),
                     ElectricPrice = table.Column<int>(type: "INTEGER", nullable: false),
+                    ElectricBillUrl = table.Column<string>(type: "TEXT", nullable: true),
                     WaterPrice = table.Column<int>(type: "INTEGER", nullable: false),
+                    WaterBillUrl = table.Column<string>(type: "TEXT", nullable: true),
                     VehiclePrice = table.Column<int>(type: "INTEGER", nullable: false),
                     OtherPrice = table.Column<int>(type: "INTEGER", nullable: false),
                     AccountId = table.Column<int>(type: "INTEGER", nullable: false),
@@ -493,7 +473,7 @@ namespace API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Photos",
+                name: "ItemPhotos",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -504,9 +484,9 @@ namespace API.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Photos", x => x.Id);
+                    table.PrimaryKey("PK_ItemPhotos", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Photos_Items_ItemId",
+                        name: "FK_ItemPhotos_Items_ItemId",
                         column: x => x.ItemId,
                         principalTable: "Items",
                         principalColumn: "Id",
@@ -516,12 +496,12 @@ namespace API.Migrations
             migrationBuilder.InsertData(
                 table: "Roles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { 1, "c9d9567b-43af-42e4-8499-80114c350d9f", "Member", "MEMBER" });
+                values: new object[] { 1, "4ef59097-9599-4c69-ab09-81f2634d7aee", "Member", "MEMBER" });
 
             migrationBuilder.InsertData(
                 table: "Roles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { 2, "af2a35e6-2bb5-46ee-a53f-d0ecd158ac85", "Admin", "ADMIN" });
+                values: new object[] { 2, "db246b0a-b0e9-46a5-a9dd-e20950749e11", "Admin", "ADMIN" });
 
             migrationBuilder.InsertData(
                 table: "TypeItems",
@@ -565,6 +545,11 @@ namespace API.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ItemPhotos_ItemId",
+                table: "ItemPhotos",
+                column: "ItemId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Items_FavoriteId",
                 table: "Items",
                 column: "FavoriteId");
@@ -594,11 +579,6 @@ namespace API.Migrations
                 name: "IX_Notifications_AccountId",
                 table: "Notifications",
                 column: "AccountId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Photos_ItemId",
-                table: "Photos",
-                column: "ItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ReportBuildings_AccountId",
@@ -674,13 +654,10 @@ namespace API.Migrations
                 name: "Comments");
 
             migrationBuilder.DropTable(
-                name: "IdentityUser");
+                name: "ItemPhotos");
 
             migrationBuilder.DropTable(
                 name: "Notifications");
-
-            migrationBuilder.DropTable(
-                name: "Photos");
 
             migrationBuilder.DropTable(
                 name: "RentRequests");

@@ -20,7 +20,7 @@ namespace API.Services.Implements
         public async Task<ListDataResponse<string>> GetPhotoUrlsByItemId(int itemId)
         {
             List<string> photoUrls = new List<string>();
-            var phottos = await _context.Photos.Where(p => p.ItemId == itemId).ToListAsync();
+            var phottos = await _context.ItemPhotos.Where(p => p.ItemId == itemId).ToListAsync();
             foreach (var photo in phottos)
             {
                 photoUrls.Add(photo.Url);

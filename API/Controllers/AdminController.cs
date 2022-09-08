@@ -233,21 +233,6 @@ namespace API.Controllers
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
-        [HttpPost("notification")]
-        public async Task<ActionResult> SendMonthlyBillForUser()
-        {
-            if (ModelState.IsValid)
-            {
-                var result = await _itemService.SendMonthlyBillForUser();
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                return BadRequest(result);
-            }
-            return BadRequest("Một số thuộc tính không hợp lệ");
-        }
-
         [HttpGet("accounts")]
         public async Task<ActionResult> GetAccounts([FromQuery] AccountParams param)
         {
@@ -391,6 +376,36 @@ namespace API.Controllers
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
+        [HttpPost("monthly-bill")]
+        public async Task<ActionResult> SendMonthlyBillForUser(int itemId, [FromForm] CreateMonthlyBillRequest request)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _itemService.SendMonthlyBillForUser(itemId, request);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("revenue/{from}&{to}")]
+        public async Task<ActionResult> GetMonthlyRevenue(DateTime from, DateTime to)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _statisticService.GetMonthlyRevenue(from, to);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
         [HttpGet("export/item")]
         public ActionResult ExportItem()
         {
@@ -398,6 +413,83 @@ namespace API.Controllers
             {
                 string time = DateTime.Now.ToString();
                 return File(_exportDataService.ExportRentedItem(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"RentedItemExport_{time}.xlsx");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("export/accounts")]
+        public async Task<ActionResult> ExportAccounts()
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(await _exportDataService.ExportAccounts(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportAccounts_{time}.xlsx");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("export/bills")]
+        public ActionResult ExportBills()
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_exportDataService.ExportBills(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportBills_{time}.xlsx");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("export/members")]
+        public ActionResult ExportMembers()
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_exportDataService.ExportMembers(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportMembers_{time}.xlsx");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("export/rent-requests")]
+        public ActionResult ExportRentRequests()
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_exportDataService.ExportRentRequests(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportRentRequests_{time}.xlsx");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("export/reports")]
+        public ActionResult ExportReports()
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_exportDataService.ExportReports(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportReports_{time}.xlsx");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("export/unrent-requests")]
+        public ActionResult ExportUnRentRequests()
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_exportDataService.ExportUnRentRequests(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportUnRentRequests_{time}.xlsx");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("export/vehicle")]
+        public ActionResult ExportVehicles()
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_exportDataService.ExportVehicles(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportVehicles_{time}.xlsx");
             }
             return BadRequest("Một số thuộc tính không hợp lệ");
         }

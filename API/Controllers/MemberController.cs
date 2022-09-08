@@ -1,4 +1,5 @@
 ﻿using API.Extensions;
+using API.Helpers;
 using API.Payloads.Requests;
 using API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +20,8 @@ namespace API.Controllers
         private readonly IPaymentService _paymentService;
         private readonly IVehicleService _vehicleService;
         private readonly INotificationService _notificationService;
+        private readonly IBillService _billService;
+        private readonly IItemService _itemService;
 
         public MemberController(IAccountService accountService,
             IFavoriteService favoriteService,
@@ -28,7 +31,9 @@ namespace API.Controllers
             IMemberService memberService,
             IPaymentService paymentService,
             IVehicleService vehicleService,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IBillService billService,
+            IItemService itemService)
         {
             _accountService = accountService;
             _favoriteService = favoriteService;
@@ -39,6 +44,8 @@ namespace API.Controllers
             _paymentService = paymentService;
             _vehicleService = vehicleService;
             _notificationService = notificationService;
+            _billService = billService;
+            _itemService = itemService;
         }
 
 
@@ -50,6 +57,72 @@ namespace API.Controllers
                 var result = await _accountService.GetProfile(User.GetUsername());
                 if (result != null)
                 {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("profile-member")]
+        public async Task<ActionResult> GetMemberOfAccount()
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _memberService.GetMemberByUsername(User.GetUsername());
+                if (result != null)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("profile-bills")]
+        public async Task<ActionResult> GetBillOfAccount([FromQuery] BillForAccountParams param)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _billService.GetBillsByUser(User.GetUserId(), param);
+                if (result != null)
+                {
+                    var bills = result.Data.MetaData;
+                    Response.AddPaginationHeader(bills.CurrentPage, bills.PageSize, bills.TotalCount, bills.TotalPages);
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("profile-items")]
+        public async Task<ActionResult> GetItemOfAccount([FromQuery] ItemForSystemParams param)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _itemService.GetItemsForAccount(User.GetUserId(), param);
+                if (result != null)
+                {
+                    var items = result.Data.MetaData;
+                    Response.AddPaginationHeader(items.CurrentPage, items.PageSize, items.TotalCount, items.TotalPages);
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("profile-vehicles")]
+        public async Task<ActionResult> GetVehicleOfAccount([FromQuery] VehicleForAccountParams param)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _vehicleService.GetVehiclesOfAccount(User.GetUserId(), param);
+                if (result.IsSuccess)
+                {
+                    var vehicles = result.Data.MetaData;
+                    Response.AddPaginationHeader(vehicles.CurrentPage, vehicles.PageSize, vehicles.TotalCount, vehicles.TotalPages);
                     return Ok(result);
                 }
                 return BadRequest(result);
@@ -163,21 +236,6 @@ namespace API.Controllers
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
-        [HttpPost("payment")]
-        public async Task<ActionResult> PayRentMoney(PayRentMoney request)
-        {
-            if (ModelState.IsValid)
-            {
-                var result = await _paymentService.PayRentMoney(User.GetUserId(), request);
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                return BadRequest(result);
-            }
-            return BadRequest("Một số thuộc tính không hợp lệ");
-        }
-
         [HttpPost("vehicle-request")]
         public async Task<ActionResult> SendVehicleRequest([FromForm] CreateVehicleRequest request)
         {
@@ -214,6 +272,21 @@ namespace API.Controllers
             if (ModelState.IsValid)
             {
                 var result = await _rentRequestService.SendUnRentRequest(User.GetUserId(), request);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpPost("payment")]
+        public async Task<ActionResult> PayRentMoney(PayRentMoney request)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _paymentService.PayRentMoney(User.GetUserId(), request);
                 if (result.IsSuccess)
                 {
                     return Ok(result);

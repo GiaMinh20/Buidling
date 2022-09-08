@@ -61,8 +61,9 @@ namespace API.Helpers
                 .ForMember(dst => dst.RenterId, src => src.MapFrom(i => i.Renter.Id));
 
             //Map Bill -> BillForAdminResponse
-            CreateMap<Bill, BillForAdminResponse>()
-                .ForMember(dst => dst.SumPrice, src => src.MapFrom(i => i.SumPrice()));
+            CreateMap<Bill, BillResponse>()
+                .ForMember(dst => dst.SumPrice, src => src.MapFrom(i => i.SumPrice()))
+                .ForMember(dst => dst.Username, src => src.MapFrom(i => i.Account.UserName));
 
             //Map Account -> GetAccountResponse
             CreateMap<Account, AccountResponse>();

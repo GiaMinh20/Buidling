@@ -86,6 +86,27 @@ namespace API.Services.Implements
                 }
             };
         }
+
+        public async Task<DataResponse<MonthlyRevenueResponse>> GetMonthlyRevenue(DateTime from, DateTime to)
+        {
+            //var item = await _context.Items.Where(i => i.Status == EItemStatus.Rented && i.MonthlyPaiedDate >= from && i.MonthlyPaiedDate <= to).ToListAsync();
+            var response = new MonthlyRevenueResponse();
+            var bills = await _context.Bills.Where(b => b.DatePaied >= from && b.DatePaied <= to).ToListAsync();
+            foreach (var bill in bills)
+            {
+                response.TotalRentPrice += (bill.ItemPrice + bill.VehiclePrice + bill.OtherPrice);
+                response.TotalWaterPrice += bill.WaterPrice;
+                response.TotalElectricPrice += bill.ElectricPrice;
+                response.TotalPaidPrice += bill.SumPrice();
+                response.TotalStriprFee += Math.Round((bill.SumPrice() * 0.029 + 0.3), 2);
+                response.Revenue += Math.Round(response.TotalPaidPrice - response.TotalStriprFee, 2);
+            }
+            return new DataResponse<MonthlyRevenueResponse>
+            {
+                IsSuccess = true,
+                Data = response
+            };
+        }
     }
 }
 

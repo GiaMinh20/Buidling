@@ -1,3 +1,4 @@
+using API.Data;
 using API.Extensions;
 using API.Helpers;
 using API.Middleware;
@@ -86,6 +87,8 @@ namespace API
             {
                 endpoints.MapControllers();
             });
+
+            InitData.SeedUsersAsync(app).Wait();
         }
     }
 }

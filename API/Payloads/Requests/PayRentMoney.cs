@@ -6,7 +6,6 @@
         public int Month { get; set; }
         public int Year { get; set; }
         public string CVC { get; set; }
-        public string Name { get; set; }
         public int BllId { get; set; }
     }
 }

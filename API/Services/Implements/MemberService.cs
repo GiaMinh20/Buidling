@@ -32,6 +32,7 @@ namespace API.Services.Implements
         {
             var members = await _context.Members
                 .Include(c => c.Account)
+                .Include(m =>m.PlaceOfOrigin)
                 .Where(p => p.Account.UserName == username).ToListAsync();
             return _mapper.Map<List<PersonResponse>>(members);
         }

@@ -10,6 +10,7 @@ namespace API.Payloads.Response
         public int WaterPrice { get; set; }
         public int VehiclePrice { get; set; }
         public int OtherPrice { get; set; }
+        public int TotalPrice { get; set; }
         public int ItemId { get; set; }
         public int AccountId { get; set; }
         public DateTime Time { get; set; }

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(BuildingContext))]
-    [Migration("20220829070146_1")]
+    [Migration("20220901082050_1")]
     partial class _1
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -110,6 +110,9 @@ namespace API.Migrations
                     b.Property<DateTime>("DatePaied")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ElectricBillUrl")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ElectricPrice")
                         .HasColumnType("INTEGER");
 
@@ -130,6 +133,9 @@ namespace API.Migrations
 
                     b.Property<int>("VehiclePrice")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("WaterBillUrl")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("WaterPrice")
                         .HasColumnType("INTEGER");
@@ -244,6 +250,28 @@ namespace API.Migrations
                     b.ToTable("Items");
                 });
 
+            modelBuilder.Entity("API.Entities.ItemPhoto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PublicId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Url")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.ToTable("ItemPhotos");
+                });
+
             modelBuilder.Entity("API.Entities.Member", b =>
                 {
                     b.Property<int>("Id")
@@ -310,28 +338,6 @@ namespace API.Migrations
                     b.HasIndex("AccountId");
 
                     b.ToTable("Notifications");
-                });
-
-            modelBuilder.Entity("API.Entities.Photo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ItemId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("PublicId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Url")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ItemId");
-
-                    b.ToTable("Photos");
                 });
 
             modelBuilder.Entity("API.Entities.RentRequest", b =>
@@ -451,14 +457,14 @@ namespace API.Migrations
                         new
                         {
                             Id = 1,
-                            ConcurrencyStamp = "c9d9567b-43af-42e4-8499-80114c350d9f",
+                            ConcurrencyStamp = "4ef59097-9599-4c69-ab09-81f2634d7aee",
                             Name = "Member",
                             NormalizedName = "MEMBER"
                         },
                         new
                         {
                             Id = 2,
-                            ConcurrencyStamp = "af2a35e6-2bb5-46ee-a53f-d0ecd158ac85",
+                            ConcurrencyStamp = "db246b0a-b0e9-46a5-a9dd-e20950749e11",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });
@@ -621,49 +627,6 @@ namespace API.Migrations
                     b.ToTable("RoleClaims");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserName")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("IdentityUser");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
                     b.Property<int>("Id")
@@ -797,6 +760,17 @@ namespace API.Migrations
                     b.Navigation("Type");
                 });
 
+            modelBuilder.Entity("API.Entities.ItemPhoto", b =>
+                {
+                    b.HasOne("API.Entities.Item", "Item")
+                        .WithMany("ItemPhotos")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("API.Entities.Member", b =>
                 {
                     b.HasOne("API.Entities.Account", "Account")
@@ -815,17 +789,6 @@ namespace API.Migrations
                         .HasForeignKey("AccountId");
 
                     b.Navigation("Account");
-                });
-
-            modelBuilder.Entity("API.Entities.Photo", b =>
-                {
-                    b.HasOne("API.Entities.Item", "Item")
-                        .WithMany("Photos")
-                        .HasForeignKey("ItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Item");
                 });
 
             modelBuilder.Entity("API.Entities.ReportBuilding", b =>
@@ -941,7 +904,7 @@ namespace API.Migrations
                 {
                     b.Navigation("Comments");
 
-                    b.Navigation("Photos");
+                    b.Navigation("ItemPhotos");
                 });
 
             modelBuilder.Entity("API.Entities.Member", b =>

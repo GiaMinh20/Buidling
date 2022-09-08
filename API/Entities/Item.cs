@@ -18,11 +18,12 @@ namespace API.Entities
         public string Location { get; set; }
 
         public bool MonthlyPaied { get; set; } = false;
+        public DateTime? MonthlyPaiedDate { get; set; }
         public DateTime? RentedDate { get; set; }
         public virtual TypeItem Type { get; set; }
         public virtual Account Renter { get; set; }
 
-        public ICollection<Photo> Photos { get; set; }
+        public ICollection<ItemPhoto> ItemPhotos { get; set; }
         public ICollection<Comment> Comments { get; set; }
     }
 }

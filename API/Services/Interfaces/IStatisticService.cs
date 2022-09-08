@@ -9,5 +9,6 @@ namespace API.Services.Interfaces
     {
         Task<DataResponse<StatisticResponse>> GetStatisticOfBuilding();
         Task<DataResponse<StatisticResponse>> GetStatictisByTime(DateTime from, DateTime to);
+        Task<DataResponse<MonthlyRevenueResponse>> GetMonthlyRevenue(DateTime from, DateTime to);
     }
 }
