@@ -87,7 +87,7 @@ namespace API.Controllers
                 {
                     return Ok(result);
                 }
-                return BadRequest(result);
+                return Unauthorized();
             }
             return BadRequest("Một số thuộc tính không hợp lệ");
         }

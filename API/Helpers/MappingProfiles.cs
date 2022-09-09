@@ -83,6 +83,9 @@ namespace API.Helpers
                 .ForMember(dst => dst.MemberOfAccount, src => src.MapFrom(i => i.Account.UserName))
                 .ForMember(dst => dst.MemberOfAccountId, src => src.MapFrom(i => i.AccountId))
                 .ForMember(dst => dst.PlaceOfOrigin, src => src.MapFrom(i => i.PlaceOfOrigin.SumAddress()));
+
+            //Map Account -> GetAccountResponse
+            CreateMap<CreateNotificationRequest, Notification>();
         }
     }
 }

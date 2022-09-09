@@ -132,7 +132,7 @@ namespace API.Services.Implements
         public async Task<LoginResponse> Login(LoginRequest request)
         {
             var user = await _userManager.FindByNameAsync(request.Username);
-            if (user == null) return null;
+            if (user == null || user.EmailConfirmed == false) return null;
             return new LoginResponse
             {
                 Username = user.UserName,

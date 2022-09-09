@@ -252,3 +252,5 @@ D:\Buidling\API\obj\Debug\net5.0\refint\API.dll
 D:\Buidling\API\obj\Debug\net5.0\API.pdb
 D:\Buidling\API\obj\Debug\net5.0\API.genruntimeconfig.cache
 D:\Buidling\API\obj\Debug\net5.0\ref\API.dll
+D:\Buidling\API\bin\Debug\net5.0\Npgsql.dll
+D:\Buidling\API\bin\Debug\net5.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll

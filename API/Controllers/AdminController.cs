@@ -21,6 +21,7 @@ namespace API.Controllers
         private readonly IStatisticService _statisticService;
         private readonly IMemberService _memberService;
         private readonly IExportDataService _exportDataService;
+        private readonly INotificationService _notificationService;
         private readonly IItemService _itemService;
         public AdminController(IItemService itemService,
             ITypeService typeService,
@@ -31,7 +32,8 @@ namespace API.Controllers
             IAccountService accountService,
             IStatisticService statisticService,
             IMemberService memberService,
-            IExportDataService exportDataService)
+            IExportDataService exportDataService,
+            INotificationService notificationService)
         {
             _typeService = typeService;
             _reportService = reportService;
@@ -42,6 +44,7 @@ namespace API.Controllers
             _statisticService = statisticService;
             _memberService = memberService;
             _exportDataService = exportDataService;
+            _notificationService = notificationService;
             _itemService = itemService;
         }
 
@@ -405,7 +408,20 @@ namespace API.Controllers
             }
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
-
+        [HttpPost("notification")]
+        public async Task<ActionResult> SendNotificationForUser(CreateNotificationRequest request)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _notificationService.PostNotificatonForAccount(User.GetUserId(), request);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
         [HttpGet("export/item")]
         public ActionResult ExportItem()
         {
