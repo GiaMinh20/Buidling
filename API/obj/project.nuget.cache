@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "JzLy8WAPsvU6XByfwiw5EWLIbS+Nn8A4jP84+RVgY7aWNn/ZFa+d6JhkG4vuJu3yuBJz+j68FNsKTut2jd0MfA==",
+  "dgSpecHash": "XLardhh6QlR5Hrde8WE8zGJmeF31pCQTvvQU3XcXvOGyXV5zyEOKJvcRSZpRr3gaHKRdG5F4R8WGHrsbQ+dn6w==",
   "success": true,
   "projectFilePath": "D:\\Buidling\\API\\API.csproj",
   "expectedPackageFiles": [
@@ -50,6 +50,7 @@
     "C:\\Users\\Gia Minh\\.nuget\\packages\\microsoft.netcore.platforms\\2.0.0\\microsoft.netcore.platforms.2.0.0.nupkg.sha512",
     "C:\\Users\\Gia Minh\\.nuget\\packages\\microsoft.netcore.targets\\1.1.0\\microsoft.netcore.targets.1.1.0.nupkg.sha512",
     "C:\\Users\\Gia Minh\\.nuget\\packages\\microsoft.openapi\\1.2.3\\microsoft.openapi.1.2.3.nupkg.sha512",
+    "C:\\Users\\Gia Minh\\.nuget\\packages\\microsoft.visualstudio.azure.containers.tools.targets\\1.17.0\\microsoft.visualstudio.azure.containers.tools.targets.1.17.0.nupkg.sha512",
     "C:\\Users\\Gia Minh\\.nuget\\packages\\microsoft.win32.primitives\\4.3.0\\microsoft.win32.primitives.4.3.0.nupkg.sha512",
     "C:\\Users\\Gia Minh\\.nuget\\packages\\microsoft.win32.systemevents\\4.5.0\\microsoft.win32.systemevents.4.5.0.nupkg.sha512",
     "C:\\Users\\Gia Minh\\.nuget\\packages\\netstandard.library\\1.6.1\\netstandard.library.1.6.1.nupkg.sha512",
