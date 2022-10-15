@@ -161,6 +161,7 @@ namespace API.Controllers
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
+        //Chưa xong
         [HttpGet("favorite")]
         public async Task<ActionResult> GetFavorite()
         {

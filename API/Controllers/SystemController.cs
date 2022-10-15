@@ -50,7 +50,7 @@ namespace API.Controllers
 
             if (result.IsSuccess)
             {
-                return Redirect("http://localhost:5000/swagger/index.html");
+                return Redirect("https://buildingmanager-api.herokuapp.com/swagger/index.html");
             }
             else
             {

@@ -10,6 +10,7 @@ namespace API.Entities
         public int Id { get; set; }
         public UserAddress PlaceOfOrigin { get; set; }
         public DateTime CreateDate { get; set; } = DateTime.Now;
+        public bool Status { get; set; } = false;
 
         public virtual Account Account { get; set; }
         public int AccountId { get; set; }

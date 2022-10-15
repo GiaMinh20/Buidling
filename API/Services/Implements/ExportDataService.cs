@@ -6,6 +6,7 @@ using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -33,12 +34,13 @@ namespace API.Services.Implements
             _userManager = userManager;
         }
 
-        public byte[] ExportRentedItem()
+        public byte[] ExportRentedItem(DateTime from, DateTime to)
         {
             var items = _context.Items
                 .Include(i => i.Type)
                 .Include(i => i.Renter)
-                .Where(i => i.Status == EItemStatus.Rented)
+                .Where(i => i.Status == EItemStatus.Rented && i.RentedDate >= from && i.RentedDate <= to)
+                .OrderBy(i => i.RentedDate)
                 .ToList();
             using (var workBook = new XLWorkbook())
             {
@@ -69,10 +71,12 @@ namespace API.Services.Implements
             }
         }
 
-        public byte[] ExportReports()
+        public byte[] ExportReports(DateTime from, DateTime to)
         {
             var reports = _context.ReportBuildings
                 .Include(i => i.Account)
+                .Where(b => b.CreateDate >= from && b.CreateDate <= to)
+                .OrderBy(b => b.CreateDate)
                 .ToList();
             using (var workBook = new XLWorkbook())
             {
@@ -100,9 +104,9 @@ namespace API.Services.Implements
             }
         }
 
-        public byte[] ExportVehicles()
+        public byte[] ExportVehicles(DateTime from, DateTime to)
         {
-            var vehicles = _context.Vehicles.Where(v => v.Status == true).ToList();
+            var vehicles = _context.Vehicles.Where(v => v.Status == true && v.CreateDate >= from && v.CreateDate <= to).OrderBy(b => b.CreateDate).ToList();
             using (var workBook = new XLWorkbook())
             {
                 var worksheet = workBook.Worksheets.Add();
@@ -129,9 +133,9 @@ namespace API.Services.Implements
             }
         }
 
-        public byte[] ExportMembers()
+        public byte[] ExportMembers(DateTime from, DateTime to)
         {
-            var members = _context.Members.Include(m => m.PlaceOfOrigin).ToList();
+            var members = _context.Members.Include(m => m.PlaceOfOrigin).Where(b =>b.Status == true && b.CreateDate >= from && b.CreateDate <= to).OrderBy(b => b.AccountId).ToList();
             using (var workBook = new XLWorkbook())
             {
                 var worksheet = workBook.Worksheets.Add();
@@ -161,9 +165,9 @@ namespace API.Services.Implements
             }
         }
 
-        public byte[] ExportBills()
+        public byte[] ExportBills(DateTime from, DateTime to)
         {
-            var bills = _context.Bills.Where(b => b.Paied == true).ToList();
+            var bills = _context.Bills.Where(b => b.Paied == true && b.CreateDate >= from && b.CreateDate <= to).OrderBy(b => b.DatePaied).ToList();
             using (var workBook = new XLWorkbook())
             {
                 var worksheet = workBook.Worksheets.Add();
@@ -197,9 +201,12 @@ namespace API.Services.Implements
             }
         }
 
-        public byte[] ExportRentRequests()
+        public byte[] ExportRentRequests(DateTime from, DateTime to)
         {
-            var rentRequests = _context.RentRequests.Where(r => r.status == true).ToList();
+            var rentRequests = _context.RentRequests
+                .Where(r => r.Status == true && r.CreateDate >= from && r.CreateDate <= to)
+                .OrderBy(r => r.CreateDate)
+                .ToList();
             using (var workBook = new XLWorkbook())
             {
                 var worksheet = workBook.Worksheets.Add();
@@ -228,9 +235,12 @@ namespace API.Services.Implements
             }
         }
 
-        public byte[] ExportUnRentRequests()
+        public byte[] ExportUnRentRequests(DateTime from, DateTime to)
         {
-            var unRentRequests = _context.UnRentRequests.Where(b => b.status == true).ToList();
+            var unRentRequests = _context.UnRentRequests
+                .Where(b => b.Status == true && b.CreateDate >= from && b.CreateDate <= to)
+                .OrderBy(b => b.CreateDate)
+                .ToList();
             using (var workBook = new XLWorkbook())
             {
                 var worksheet = workBook.Worksheets.Add();
@@ -260,9 +270,14 @@ namespace API.Services.Implements
             }
         }
 
-        public async Task<byte[]> ExportAccounts()
+        public async Task<byte[]> ExportAccounts(DateTime from, DateTime to)
         {
-            var accounts = _context.Users.Include(i => i.Items).Include(i => i.Vehicles).Where(b => b.EmailConfirmed == true).ToList();
+            var accounts = _context.Users
+                .Include(i => i.Items)
+                .Include(i => i.Vehicles)
+                .Where(b => b.EmailConfirmed == true && b.CreateDate >= from && b.CreateDate <= to)
+                .OrderBy(b => b.CreateDate)
+                .ToList();
             List<Account> memberAccounts = new List<Account>();
             foreach (var account in accounts)
             {

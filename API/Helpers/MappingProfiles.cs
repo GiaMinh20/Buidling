@@ -29,9 +29,7 @@ namespace API.Helpers
                 .ForMember(dst => dst.AccountAvatar, src => src.MapFrom(i => i.Account.AvatarUrl));
 
             //Map Account -> ProfileResponse
-            CreateMap<Account, ProfileResponse>()
-                .ForMember(dst => dst.CountPerson, src => src.MapFrom(i => i.Members.Count));
-
+            CreateMap<Account, ProfileResponse>();
             //Map Member -> PersonResponse
             CreateMap<Member, PersonResponse>()
                 .ForMember(dst => dst.PlaceOfOrigin, src => src.MapFrom(i => i.PlaceOfOrigin.SumAddress()));
@@ -84,8 +82,11 @@ namespace API.Helpers
                 .ForMember(dst => dst.MemberOfAccountId, src => src.MapFrom(i => i.AccountId))
                 .ForMember(dst => dst.PlaceOfOrigin, src => src.MapFrom(i => i.PlaceOfOrigin.SumAddress()));
 
-            //Map Account -> GetAccountResponse
+            //Map Notification -> Notification
             CreateMap<CreateNotificationRequest, Notification>();
+
+            //Map Notification -> NotificationResponse
+            CreateMap<Notification, NotificationResponse>().ReverseMap();
         }
     }
 }

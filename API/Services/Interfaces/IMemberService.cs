@@ -13,5 +13,6 @@ namespace API.Services.Interfaces
         public Task<List<PersonResponse>> GetMemberByUsername(string username);
         Task<BaseResponse> AddMemberForAccount(int userId, CreateMemberRequest request);
         Task<DataResponse<PagedList<MemberForAdminResponse>>> GetMembers(MemberParams param);
+        Task<BaseResponse> AcceptMember(AcceptMemberRequest request);
     }
 }

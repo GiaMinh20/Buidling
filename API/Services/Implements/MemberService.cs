@@ -32,8 +32,10 @@ namespace API.Services.Implements
         {
             var members = await _context.Members
                 .Include(c => c.Account)
-                .Include(m =>m.PlaceOfOrigin)
-                .Where(p => p.Account.UserName == username).ToListAsync();
+                .Include(m => m.PlaceOfOrigin)
+                .Where(p => p.Account.UserName == username && p.Status == true)
+                .OrderByDescending(m => m.CreateDate)
+                .ToListAsync();
             return _mapper.Map<List<PersonResponse>>(members);
         }
 
@@ -73,6 +75,22 @@ namespace API.Services.Implements
             return new BaseResponse { IsSuccess = false, Message = "Thất bại" };
         }
 
+        public async Task<BaseResponse> AcceptMember(AcceptMemberRequest request)
+        {
+            var member = await _context.Members.FindAsync(request.Id);
+            if (member == null) return new BaseResponse { IsSuccess = false, Message = "Không tìm thấy thông tin" };
+            member.Status = true;
+            try
+            {
+                if (await _context.SaveChangesAsync() > 0)
+                    return new BaseResponse { IsSuccess = true, Message = "Thành công" };
+            }
+            catch (System.Exception)
+            {
+                return new BaseResponse { IsSuccess = false, Message = "Thất bại" };
+            }
+            return new BaseResponse { IsSuccess = false, Message = "Thất bại" };
+        }
         public async Task<DataResponse<PagedList<MemberForAdminResponse>>> GetMembers(MemberParams param)
         {
             var query = await _context.Members

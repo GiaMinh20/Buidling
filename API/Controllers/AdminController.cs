@@ -22,6 +22,7 @@ namespace API.Controllers
         private readonly IMemberService _memberService;
         private readonly IExportDataService _exportDataService;
         private readonly INotificationService _notificationService;
+        private readonly IPdfService _pdfService;
         private readonly IItemService _itemService;
         public AdminController(IItemService itemService,
             ITypeService typeService,
@@ -33,7 +34,8 @@ namespace API.Controllers
             IStatisticService statisticService,
             IMemberService memberService,
             IExportDataService exportDataService,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IPdfService pdfService)
         {
             _typeService = typeService;
             _reportService = reportService;
@@ -45,11 +47,12 @@ namespace API.Controllers
             _memberService = memberService;
             _exportDataService = exportDataService;
             _notificationService = notificationService;
+            _pdfService = pdfService;
             _itemService = itemService;
         }
 
         [HttpPost("types")]
-        public async Task<ActionResult> CreateItemType(CreateTypeRequest request)
+        public async Task<ActionResult> CreateItemType([FromBody] CreateTypeRequest request)
         {
             if (ModelState.IsValid)
             {
@@ -78,12 +81,12 @@ namespace API.Controllers
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
-        [HttpPut("item/edit/{id}")]
-        public async Task<ActionResult> EditItem(int id, [FromForm] EditItemRequest request)
+        [HttpPut("item")]
+        public async Task<ActionResult> EditItem([FromForm] EditItemRequest request)
         {
             if (ModelState.IsValid)
             {
-                var result = await _itemService.EditItem(id, request);
+                var result = await _itemService.EditItem(request);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
@@ -158,11 +161,26 @@ namespace API.Controllers
         }
 
         [HttpPut("item/assign")]
-        public async Task<ActionResult> AssignUserForItem(int userId, int itemId)
+        public async Task<ActionResult> AssignUserForItem([FromBody] AssignUserForItemRequest request)
         {
             if (ModelState.IsValid)
             {
-                var result = await _itemService.AssignUserForItem(userId, itemId);
+                var result = await _itemService.AssignUserForItem(request);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpPut("member")]
+        public async Task<ActionResult> AcceptMember([FromBody] AcceptMemberRequest request)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _memberService.AcceptMember(request);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
@@ -207,7 +225,7 @@ namespace API.Controllers
         }
 
         [HttpPut("vehicles/accept")]
-        public async Task<ActionResult> AcceptVehicle(int vehicleId)
+        public async Task<ActionResult> AcceptVehicle([FromBody] int vehicleId)
         {
             if (ModelState.IsValid)
             {
@@ -315,6 +333,36 @@ namespace API.Controllers
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
+        [HttpGet("monthly-statistic")]
+        public async Task<ActionResult> GetMonthlyStatisticOfBuilding([FromQuery] DateTime from, DateTime to)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _statisticService.GetStatictisByTime(from, to);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpGet("monthly-revenue")]
+        public async Task<ActionResult> GetMonthlyRevenue([FromQuery] DateTime from, DateTime to)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _statisticService.GetMonthlyRevenue(from, to);
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
         [HttpGet("members")]
         public async Task<ActionResult> GetMembers([FromQuery] MemberParams param)
         {
@@ -350,26 +398,11 @@ namespace API.Controllers
         }
 
         [HttpPut("item/unassign")]
-        public async Task<ActionResult> UnAssignUserForItem(int userId, int itemId)
+        public async Task<ActionResult> UnAssignUserForItem(UnAssignUserForItemRequest request)
         {
             if (ModelState.IsValid)
             {
-                var result = await _itemService.UnAssignUserForItem(userId, itemId, User.GetUserId());
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                return BadRequest(result);
-            }
-            return BadRequest("Một số thuộc tính không hợp lệ");
-        }
-
-        [HttpGet("statistic/{from}&{to}")]
-        public async Task<ActionResult> GetStatisticByTime(DateTime from, DateTime to)
-        {
-            if (ModelState.IsValid)
-            {
-                var result = await _statisticService.GetStatictisByTime(from, to);
+                var result = await _itemService.UnAssignUserForItem(request.UserId, request.ItemId, User.GetUserId(), request.HasRequest);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
@@ -384,7 +417,24 @@ namespace API.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await _itemService.SendMonthlyBillForUser(itemId, request);
+                var result = await _itemService.SendMonthlyBillForUser(User.GetUserId(), itemId, request);
+                if (result.IsSuccess)
+                {
+                    string time = DateTime.Now.ToString();
+
+                    return File(result.Data, "application/octet-stream", $"Bill_{time}.pdf");
+                }
+                return BadRequest(result);
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+
+        [HttpPost("notification")]
+        public async Task<ActionResult> SendNotificationForUser(CreateNotificationRequest request, int? userId)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _notificationService.PostNotificatonForAccount(User.GetUserId(), request, userId);
                 if (result.IsSuccess)
                 {
                     return Ok(result);
@@ -394,120 +444,167 @@ namespace API.Controllers
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
-        [HttpGet("revenue/{from}&{to}")]
-        public async Task<ActionResult> GetMonthlyRevenue(DateTime from, DateTime to)
-        {
-            if (ModelState.IsValid)
-            {
-                var result = await _statisticService.GetMonthlyRevenue(from, to);
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                return BadRequest(result);
-            }
-            return BadRequest("Một số thuộc tính không hợp lệ");
-        }
-        [HttpPost("notification")]
-        public async Task<ActionResult> SendNotificationForUser(CreateNotificationRequest request)
-        {
-            if (ModelState.IsValid)
-            {
-                var result = await _notificationService.PostNotificatonForAccount(User.GetUserId(), request);
-                if (result.IsSuccess)
-                {
-                    return Ok(result);
-                }
-                return BadRequest(result);
-            }
-            return BadRequest("Một số thuộc tính không hợp lệ");
-        }
+        #region Export Excel
         [HttpGet("export/item")]
-        public ActionResult ExportItem()
+        public ActionResult ExportItem([FromQuery] DateTime from, DateTime to)
         {
             if (ModelState.IsValid)
             {
                 string time = DateTime.Now.ToString();
-                return File(_exportDataService.ExportRentedItem(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"RentedItemExport_{time}.xlsx");
+                return File(_exportDataService.ExportRentedItem(from, to), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"RentedItemExport_{time}.xlsx");
             }
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
         [HttpGet("export/accounts")]
-        public async Task<ActionResult> ExportAccounts()
+        public async Task<ActionResult> ExportAccounts([FromQuery] DateTime from, DateTime to)
         {
             if (ModelState.IsValid)
             {
                 string time = DateTime.Now.ToString();
-                return File(await _exportDataService.ExportAccounts(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportAccounts_{time}.xlsx");
+                return File(await _exportDataService.ExportAccounts(from, to), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportAccounts_{time}.xlsx");
             }
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
         [HttpGet("export/bills")]
-        public ActionResult ExportBills()
+        public ActionResult ExportBills([FromQuery] DateTime from, DateTime to)
         {
             if (ModelState.IsValid)
             {
                 string time = DateTime.Now.ToString();
-                return File(_exportDataService.ExportBills(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportBills_{time}.xlsx");
+                return File(_exportDataService.ExportBills(from, to), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportBills_{time}.xlsx");
             }
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
         [HttpGet("export/members")]
-        public ActionResult ExportMembers()
+        public ActionResult ExportMembers([FromQuery] DateTime from, DateTime to)
         {
             if (ModelState.IsValid)
             {
                 string time = DateTime.Now.ToString();
-                return File(_exportDataService.ExportMembers(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportMembers_{time}.xlsx");
+                return File(_exportDataService.ExportMembers(from, to), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportMembers_{time}.xlsx");
             }
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
         [HttpGet("export/rent-requests")]
-        public ActionResult ExportRentRequests()
+        public ActionResult ExportRentRequests([FromQuery] DateTime from, DateTime to)
         {
             if (ModelState.IsValid)
             {
                 string time = DateTime.Now.ToString();
-                return File(_exportDataService.ExportRentRequests(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportRentRequests_{time}.xlsx");
+                return File(_exportDataService.ExportRentRequests(from, to), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportRentRequests_{time}.xlsx");
             }
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
         [HttpGet("export/reports")]
-        public ActionResult ExportReports()
+        public ActionResult ExportReports([FromQuery] DateTime from, DateTime to)
         {
             if (ModelState.IsValid)
             {
                 string time = DateTime.Now.ToString();
-                return File(_exportDataService.ExportReports(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportReports_{time}.xlsx");
+                return File(_exportDataService.ExportReports(from, to), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportReports_{time}.xlsx");
             }
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
         [HttpGet("export/unrent-requests")]
-        public ActionResult ExportUnRentRequests()
+        public ActionResult ExportUnRentRequests([FromQuery] DateTime from, DateTime to)
         {
             if (ModelState.IsValid)
             {
                 string time = DateTime.Now.ToString();
-                return File(_exportDataService.ExportUnRentRequests(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportUnRentRequests_{time}.xlsx");
+                return File(_exportDataService.ExportUnRentRequests(from, to), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportUnRentRequests_{time}.xlsx");
             }
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
 
         [HttpGet("export/vehicle")]
-        public ActionResult ExportVehicles()
+        public ActionResult ExportVehicles([FromQuery] DateTime from, DateTime to)
         {
             if (ModelState.IsValid)
             {
                 string time = DateTime.Now.ToString();
-                return File(_exportDataService.ExportVehicles(), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportVehicles_{time}.xlsx");
+                return File(_exportDataService.ExportVehicles(from, to), "application/vnd.openxmltormats-officedocument.spreadsheetml.sheet", $"ExportVehicles_{time}.xlsx");
             }
             return BadRequest("Một số thuộc tính không hợp lệ");
         }
+        #endregion
+
+        #region Export PDF
+        [HttpGet("pdf/bills")]
+        public ActionResult GeneratePDFBills([FromQuery] DateTime from, DateTime to)
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_pdfService.ExportBills(from, to), "application/octet-stream", $"Bills_{time}.pdf");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+        [HttpGet("pdf/members")]
+        public ActionResult GeneratePDFMembers([FromQuery] DateTime from, DateTime to)
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_pdfService.ExportMembers(from, to), "application/octet-stream", $"Members_{time}.pdf");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+        [HttpGet("pdf/rented-items")]
+        public ActionResult GeneratePDFRentedItems([FromQuery] DateTime from, DateTime to)
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_pdfService.ExportRentedItem(from, to), "application/octet-stream", $"RentedItems_{time}.pdf");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+        [HttpGet("pdf/rent-requests")]
+        public ActionResult GeneratePDFRentRequests([FromQuery] DateTime from, DateTime to)
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_pdfService.ExportRentRequests(from, to), "application/octet-stream", $"RentRequests_{time}.pdf");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+        [HttpGet("pdf/reports")]
+        public ActionResult GeneratePDFReports([FromQuery] DateTime from, DateTime to)
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_pdfService.ExportReports(from, to), "application/octet-stream", $"Reports_{time}.pdf");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+        [HttpGet("pdf/unrent-requests")]
+        public ActionResult GeneratePDFUnRentRequests([FromQuery] DateTime from, DateTime to)
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_pdfService.ExportUnRentRequests(from, to), "application/octet-stream", $"UnRentRequests_{time}.pdf");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+        [HttpGet("pdf/vehicles")]
+        public ActionResult GeneratePDFVehicles([FromQuery] DateTime from, DateTime to)
+        {
+            if (ModelState.IsValid)
+            {
+                string time = DateTime.Now.ToString();
+                return File(_pdfService.ExportVehicles(from, to), "application/octet-stream", $"Vehicles_{time}.pdf");
+            }
+            return BadRequest("Một số thuộc tính không hợp lệ");
+        }
+        #endregion
     }
 }

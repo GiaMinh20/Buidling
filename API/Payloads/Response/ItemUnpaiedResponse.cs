@@ -8,5 +8,6 @@
         public int LatedDay { get; set; }
         public int RenterId { get; set; }
         public string RenterName { get; set; }
+        public bool HasMonthlyBill { get; set; } = false;
     }
 }

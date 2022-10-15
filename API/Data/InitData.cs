@@ -31,7 +31,7 @@ namespace API.Data
                     };
                     await userManager.CreateAsync(user, "Giaminh2001@");
                     await userManager.AddToRoleAsync(user, "Member");
-                    for (int i = 1; i < 2; i++)
+                    for (int i = 1; i < 6; i++)
                     {
                         string adminEmail = config[$"Admin0{i}:Email"];
                         var adminUser = await userManager.FindByEmailAsync(adminEmail);

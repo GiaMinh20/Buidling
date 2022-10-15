@@ -20,6 +20,7 @@ namespace API.Extensions
                 opt.User.RequireUniqueEmail = true;
                 opt.SignIn.RequireConfirmedEmail = true;
             })
+                .AddSignInManager<SignInManager<Account>>()
                 .AddRoles<Role>()
                 .AddDefaultTokenProviders()
                 .AddEntityFrameworkStores<BuildingContext>();

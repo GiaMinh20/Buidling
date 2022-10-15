@@ -24,28 +24,28 @@ namespace API.Services.Implements
         }
         public async Task<BaseResponse> AddItemToFavorites(int itemId, int accountId)
         {
-            var favourite = await _context.Favorites
-                .Include(f => f.Items)
-                .FirstOrDefaultAsync(f => f.AccountId == accountId);
-            var item = await _context.Items.FindAsync(itemId);
-            if (favourite == null)
-            {
-                List<Item> items = new List<Item>();
-                items.Add(item);
-                _context.Favorites.Add(new Favorite { AccountId = accountId, Items = items });
-            }
-            else
-            {
-                favourite.Items.Add(item);
-            }
-            if (await _context.SaveChangesAsync() > 0)
-            {
-                return new BaseResponse
-                {
-                    IsSuccess = true,
-                    Message = "Lưu thành công"
-                };
-            }
+            //var favourite = await _context.Favorites
+            //    .Include(f => f.Items)
+            //    .FirstOrDefaultAsync(f => f.AccountId == accountId);
+            //var item = await _context.Items.FindAsync(itemId);
+            //if (favourite == null)
+            //{
+            //    List<Item> items = new List<Item>();
+            //    items.Add(item);
+            //    _context.Favorites.Add(new Favorite { AccountId = accountId, Items = items });
+            //}
+            //else
+            //{
+            //    favourite.Items.Add(item);
+            //}
+            //if (await _context.SaveChangesAsync() > 0)
+            //{
+            //    return new BaseResponse
+            //    {
+            //        IsSuccess = true,
+            //        Message = "Lưu thành công"
+            //    };
+            //}
             return new BaseResponse
             {
                 IsSuccess = false,
@@ -58,7 +58,7 @@ namespace API.Services.Implements
             var favorite = await _context.Favorites
                 .Include(f => f.Items)
                 .ThenInclude(i => i.Type)
-                .Where(f => f.AccountId == accountId)
+                //.Where(f => f.AccountId == accountId)
                 .FirstOrDefaultAsync();
 
             return new ListDataResponse<ItemForFavoriteResponse>

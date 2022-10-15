@@ -208,6 +208,8 @@ D:\Buidling\API\bin\Debug\net5.0\Microsoft.IdentityModel.Protocols.OpenIdConnect
 D:\Buidling\API\bin\Debug\net5.0\Microsoft.IdentityModel.Tokens.dll
 D:\Buidling\API\bin\Debug\net5.0\Microsoft.OpenApi.dll
 D:\Buidling\API\bin\Debug\net5.0\Newtonsoft.Json.dll
+D:\Buidling\API\bin\Debug\net5.0\Npgsql.dll
+D:\Buidling\API\bin\Debug\net5.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
 D:\Buidling\API\bin\Debug\net5.0\SQLitePCLRaw.batteries_v2.dll
 D:\Buidling\API\bin\Debug\net5.0\SQLitePCLRaw.nativelibrary.dll
 D:\Buidling\API\bin\Debug\net5.0\SQLitePCLRaw.core.dll
@@ -252,5 +254,4 @@ D:\Buidling\API\obj\Debug\net5.0\refint\API.dll
 D:\Buidling\API\obj\Debug\net5.0\API.pdb
 D:\Buidling\API\obj\Debug\net5.0\API.genruntimeconfig.cache
 D:\Buidling\API\obj\Debug\net5.0\ref\API.dll
-D:\Buidling\API\bin\Debug\net5.0\Npgsql.dll
-D:\Buidling\API\bin\Debug\net5.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
+D:\Buidling\API\bin\Debug\net5.0\DinkToPdf.dll

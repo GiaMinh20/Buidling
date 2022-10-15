@@ -3,6 +3,7 @@ using Mailjet.Client;
 using Mailjet.Client.Resources;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
+using System.Net.Mime;
 using System.Threading.Tasks;
 
 namespace API.Services.Implements
@@ -24,12 +25,12 @@ namespace API.Services.Implements
             _configuration = configuration;
         }
 
-        public Task SendEmailAsync(string email, string subject, string htmlMessage)
+        public Task SendEmailAsync(string email, string subject, string htmlMessage, byte[] att)
         {
-            return Execute(email, subject, htmlMessage);
+            return Execute(email, subject, htmlMessage, att);
         }
 
-        public async Task Execute(string email, string subject, string body)
+        public async Task Execute(string email, string subject, string body, byte[] att)
         {
             _mailJetSettings = _configuration.GetSection("MailJet").Get<MailJetSettings>();
 
@@ -68,6 +69,17 @@ namespace API.Services.Implements
                     },
                     {
                         "HTMLPart", body
+                    },
+                    {
+                        "Attachments", new JArray
+                        {
+                            new JObject
+                            {
+                                {"ContentType", "application/octet-stream "},
+                                 {"Filename", "Hoadon.pdf"},
+                                 {"Base64Content", att}
+                            }
+                        }
                     }
                     }
                 });

@@ -15,8 +15,8 @@ namespace API.Entities
         public virtual ICollection<Vehicle> Vehicles { get; set; }
 
         public virtual ICollection<Comment> Comments { get; set; }
-        public virtual ICollection<Notification> Notifications { get; set; }
-        public virtual Favorite Favorite { get; set; }
+        public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+        //public virtual Favorite Favorite { get; set; } = new Favorite();
         public DateTime CreateDate { get; set; } = DateTime.Now;
     }
 }

@@ -10,14 +10,14 @@ namespace API.Extensions
         public static IQueryable<RentRequest> Status(this IQueryable<RentRequest> query, bool? status)
         {
             if (status == null) return query;
-            query = query.Where(p => p.status == status);
+            query = query.Where(p => p.Status == status);
             return query;
         }
 
         public static IQueryable<UnRentRequest> Status(this IQueryable<UnRentRequest> query, bool? status)
         {
             if (status == null) return query;
-            query = query.Where(p => p.status == status);
+            query = query.Where(p => p.Status == status);
             return query;
         }
 

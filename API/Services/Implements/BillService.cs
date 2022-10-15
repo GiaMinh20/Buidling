@@ -74,6 +74,7 @@ namespace API.Services.Implements
                 .Where(b => b.AccountId == userId)
                 .Paied(param.Paied)
                 .Bill(param.BillId)
+                .OrderByDescending(b=>b.CreateDate)
                 .ToListAsync();
             var bills = _mapper.Map<List<BillResponse>>(query);
 

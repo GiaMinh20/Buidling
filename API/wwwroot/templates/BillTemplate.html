@@ -1,0 +1,73 @@
+﻿<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome Email from Building Manager .NET 5</title>
+</head>
+<body>
+    <div class="container" style="width: 80vw; margin: auto;">
+        <h1>Hóa đơn của Chung cư .NET</h1>
+        <div style="display: grid; grid-template-columns: 1fr 1fr;">
+            <div style="grid-column: 1/3;">
+                <strong>Ngày in:&nbsp</strong> <span>{0}</span>
+            </div>
+            <div class="bill-id">
+                <strong>Mã hóa đơn:&nbsp</strong> <span>{1}</span>
+            </div>
+            <div class="bill-name">
+                <strong>Tên hóa đơn:&nbsp</strong><span>Hóa đơn tháng {2}</span>
+            </div>
+            <div class="customer-name">
+                <strong>Họ tên:&nbsp</strong><span>{3}</span>
+            </div>
+            <div class="customer-id">
+                <strong>Mã khách hàng:&nbsp</strong><span>{4}</span>
+            </div>
+        </div>
+        <br />
+        <table style="width: 100%">
+            <tr>
+                <th style="width: 2px;">STT</th>
+                <th>Tên dịch vụ</th>
+                <th>Thành tiền</th>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black;">1</td>
+                <td style="border: 1px solid black;">Tiền thuê</td>
+                <td style="border: 1px solid black;">{5}</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black;">2</td>
+                <td style="border: 1px solid black;">Tiền điện</td>
+                <td style="border: 1px solid black;">{6}</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black;">3</td>
+                <td style="border: 1px solid black;">Tiền nước</td>
+                <td style="border: 1px solid black;">{7}</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black;">4</td>
+                <td style="border: 1px solid black;">Tiền giữ xe</td>
+                <td style="border: 1px solid black;">{8}</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black;">2</td>
+                <td style="border: 1px solid black;">Tiền dịch vụ </td>
+                <td style="border: 1px solid black;">{9}</td>
+            </tr>
+        </table>
+        <br />
+        <div class="sum"><span>Tổng tiền:&nbsp</span><strong>{10}</strong></div>
+        <div class="bill-img">
+            <img style="width: 20rem; height: 20rem;" src="{11}"
+                 alt="Hoa Don Nuoc" />
+            <img style="width: 20rem; height: 20rem;" src="{12}"
+                 alt="Hoa Don Dien" />
+        </div>
+        <div style="text-align: right; margin-right:20px">
+            <div><strong>Chữ ký</strong></div>
+            <div>Chung cư .NET</div>
+        </div>
+    </div>
+</body>
+</html>

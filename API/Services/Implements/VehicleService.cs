@@ -85,6 +85,7 @@ namespace API.Services.Implements
                 .LicensePlates(param.LicensePlates)
                 .Transportation(param.Transportation)
                 .Status(param.Status)
+                .OrderByDescending(v=>v.CreateDate)
                 .ToListAsync();
 
             var responses = PagedList<Vehicle>.ToPagedList(query,

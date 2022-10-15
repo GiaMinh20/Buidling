@@ -10,6 +10,7 @@
 		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
 		<PackageReference Include="ClosedXML" Version="0.96.0" />
 		<PackageReference Include="CloudinaryDotNet" Version="1.19.0" />
+		<PackageReference Include="DinkToPdf" Version="1.0.8" />
 		<PackageReference Include="Mailjet.Api" Version="1.2.2" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.17" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.17" />
@@ -25,22 +26,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="Dockerfile">
-	    <Generator>TextTemplatingFileGenerator</Generator>
-	    <LastGenOutput>Dockerfile.cs</LastGenOutput>
-	  </None>
-	</ItemGroup>
-
-	<ItemGroup>
 	  <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Compile Update="Dockerfile.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>Dockerfile</DependentUpon>
-	  </Compile>
 	</ItemGroup>
 
 </Project>

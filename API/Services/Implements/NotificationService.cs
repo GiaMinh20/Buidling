@@ -1,12 +1,14 @@
 ﻿using API.Data;
 using API.Entities;
 using API.Payloads.Requests;
+using API.Payloads.Response;
 using API.Payloads.Response.BaseResponses;
 using API.Services.Interfaces;
 using AutoMapper;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -30,7 +32,6 @@ namespace API.Services.Implements
             var user = await _context.Users.FindAsync(userId);
             var notification = new Notification
             {
-                //Account = user,
                 Content = content,
                 Title = title,
                 //Seen = false
@@ -38,36 +39,48 @@ namespace API.Services.Implements
             return notification;
         }
 
-        public async Task<ListDataResponse<Notification>> GetAllNotifyOfAccount(int userId)
+        public async Task<ListDataResponse<NotificationResponse>> GetAllNotifyOfAccount(int userId)
         {
             var user = await _context.Users
                 .Include(u => u.Notifications)
                 .FirstOrDefaultAsync(u => u.Id == userId);
-            var notifications = user.Notifications.ToList();
-            return new ListDataResponse<Notification>
+            List<Notification> notifications = user.Notifications.OrderByDescending(n => n.CreateDate).ToList();
+            var response = _mapper.Map<List<NotificationResponse>>(notifications);
+            return new ListDataResponse<NotificationResponse>
             {
                 IsSuccess = true,
-                Datas = notifications
+                Datas = response
             };
         }
 
-        public async Task<BaseResponse> PostNotificatonForAccount(int adminId, CreateNotificationRequest request)
+        public async Task<BaseResponse> PostNotificatonForAccount(int adminId, CreateNotificationRequest request, int? userId)
         {
-            var admin = await _context.Users.FirstOrDefaultAsync(u => u.Id == adminId);
+            var admin = await _context.Users.Include(u => u.Notifications).FirstOrDefaultAsync(u => u.Id == adminId);
             var notification = _mapper.Map<Notification>(request);
+
             notification.CreateBy = admin.UserName;
-            var accounts = await _context.Users.ToListAsync();
-            foreach (var account in accounts)
+            if (userId == null)
             {
-                var roles = await _userManager.GetRolesAsync(account);
-                if (roles.Contains("Member"))
+                var accounts = await _context.Users.ToListAsync();
+                foreach (var account in accounts)
                 {
-                    account.Notifications.Add(notification);
+                    var roles = await _userManager.GetRolesAsync(account);
+                    if (roles.Contains("Member"))
+                    {
+                        account.Notifications.Add(notification);
+                    }
                 }
+                if (await _context.SaveChangesAsync() <= 0)
+                    return new BaseResponse { IsSuccess = false, Message = "Gửi thông báo thất bại" };
             }
-            if (await _context.SaveChangesAsync() > 0)
-                return new BaseResponse { IsSuccess = true, Message = "Gửi thông báo thành công" };
-            return new BaseResponse { IsSuccess = false, Message = "Gửi thông báo thất bại" };
+            else
+            {
+                var account = await _context.Users.Include(u => u.Notifications).FirstOrDefaultAsync(u => u.Id == userId);
+                account.Notifications.Add(notification);
+                if (await _context.SaveChangesAsync() <= 0)
+                    return new BaseResponse { IsSuccess = false, Message = "Gửi thông báo thất bại" };
+            }
+            return new BaseResponse { IsSuccess = true, Message = "Gửi thông báo thành công" };
         }
     }
 }

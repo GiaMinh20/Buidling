@@ -49,6 +49,9 @@ namespace API.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("FavoriteId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
 
@@ -86,6 +89,8 @@ namespace API.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FavoriteId");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
@@ -185,13 +190,7 @@ namespace API.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int>("AccountId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("AccountId")
-                        .IsUnique();
 
                     b.ToTable("Favorites");
                 });
@@ -316,6 +315,9 @@ namespace API.Migrations
                     b.Property<string>("Nationality")
                         .HasColumnType("text");
 
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AccountId");
@@ -333,9 +335,6 @@ namespace API.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int?>("AccountId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Content")
                         .HasColumnType("text");
 
@@ -349,8 +348,6 @@ namespace API.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AccountId");
 
                     b.ToTable("Notifications");
                 });
@@ -382,10 +379,14 @@ namespace API.Migrations
                     b.Property<int>("RenterId")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("status")
+                    b.Property<bool>("Status")
                         .HasColumnType("boolean");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("RenterId");
 
                     b.ToTable("RentRequests");
                 });
@@ -476,14 +477,14 @@ namespace API.Migrations
                         new
                         {
                             Id = 1,
-                            ConcurrencyStamp = "543dee26-2987-46fb-87d8-109ac2b8aea0",
+                            ConcurrencyStamp = "549e3c02-f3d9-48e4-8a02-de71796fbebe",
                             Name = "Member",
                             NormalizedName = "MEMBER"
                         },
                         new
                         {
                             Id = 2,
-                            ConcurrencyStamp = "944cbfb3-e5af-495c-9ab7-7b11ecbb0249",
+                            ConcurrencyStamp = "b64a65b8-fc63-4ad7-a5b3-de9a1afd0712",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });
@@ -559,10 +560,14 @@ namespace API.Migrations
                     b.Property<int>("RenterId")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("status")
+                    b.Property<bool>("Status")
                         .HasColumnType("boolean");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("RenterId");
 
                     b.ToTable("UnRentRequests");
                 });
@@ -625,6 +630,21 @@ namespace API.Migrations
                         .IsUnique();
 
                     b.ToTable("Vehicles");
+                });
+
+            modelBuilder.Entity("AccountNotification", b =>
+                {
+                    b.Property<int>("AccountsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NotificationsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("AccountsId", "NotificationsId");
+
+                    b.HasIndex("NotificationsId");
+
+                    b.ToTable("AccountNotification");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -728,6 +748,13 @@ namespace API.Migrations
                     b.ToTable("UserTokens");
                 });
 
+            modelBuilder.Entity("API.Entities.Account", b =>
+                {
+                    b.HasOne("API.Entities.Favorite", null)
+                        .WithMany("Accounts")
+                        .HasForeignKey("FavoriteId");
+                });
+
             modelBuilder.Entity("API.Entities.Bill", b =>
                 {
                     b.HasOne("API.Entities.Account", "Account")
@@ -756,15 +783,6 @@ namespace API.Migrations
                     b.Navigation("Account");
 
                     b.Navigation("Item");
-                });
-
-            modelBuilder.Entity("API.Entities.Favorite", b =>
-                {
-                    b.HasOne("API.Entities.Account", null)
-                        .WithOne("Favorite")
-                        .HasForeignKey("API.Entities.Favorite", "AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("API.Entities.Item", b =>
@@ -808,11 +826,23 @@ namespace API.Migrations
                     b.Navigation("Account");
                 });
 
-            modelBuilder.Entity("API.Entities.Notification", b =>
+            modelBuilder.Entity("API.Entities.RentRequest", b =>
                 {
-                    b.HasOne("API.Entities.Account", null)
-                        .WithMany("Notifications")
-                        .HasForeignKey("AccountId");
+                    b.HasOne("API.Entities.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("API.Entities.Account", "Renter")
+                        .WithMany()
+                        .HasForeignKey("RenterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("Renter");
                 });
 
             modelBuilder.Entity("API.Entities.ReportBuilding", b =>
@@ -835,6 +865,25 @@ namespace API.Migrations
                     b.Navigation("Report");
                 });
 
+            modelBuilder.Entity("API.Entities.UnRentRequest", b =>
+                {
+                    b.HasOne("API.Entities.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("API.Entities.Account", "Renter")
+                        .WithMany()
+                        .HasForeignKey("RenterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("Renter");
+                });
+
             modelBuilder.Entity("API.Entities.UserAddress", b =>
                 {
                     b.HasOne("API.Entities.Member", null)
@@ -849,6 +898,21 @@ namespace API.Migrations
                     b.HasOne("API.Entities.Account", null)
                         .WithMany("Vehicles")
                         .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AccountNotification", b =>
+                {
+                    b.HasOne("API.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("API.Entities.Notification", null)
+                        .WithMany()
+                        .HasForeignKey("NotificationsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -910,19 +974,17 @@ namespace API.Migrations
 
                     b.Navigation("Comments");
 
-                    b.Navigation("Favorite");
-
                     b.Navigation("Items");
 
                     b.Navigation("Members");
-
-                    b.Navigation("Notifications");
 
                     b.Navigation("Vehicles");
                 });
 
             modelBuilder.Entity("API.Entities.Favorite", b =>
                 {
+                    b.Navigation("Accounts");
+
                     b.Navigation("Items");
                 });
 

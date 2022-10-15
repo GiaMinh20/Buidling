@@ -1,6 +1,7 @@
 ﻿using API.Helpers;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace API.Entities
 {
@@ -21,6 +22,7 @@ namespace API.Entities
         public DateTime? MonthlyPaiedDate { get; set; }
         public DateTime? RentedDate { get; set; }
         public virtual TypeItem Type { get; set; }
+        [ConcurrencyCheck]
         public virtual Account Renter { get; set; }
 
         public ICollection<ItemPhoto> ItemPhotos { get; set; }

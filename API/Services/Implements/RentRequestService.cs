@@ -16,12 +16,12 @@ namespace API.Services.Implements
     public class RentRequestService : IRentRequestService
     {
         private readonly BuildingContext _context;
-        private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
 
-        public RentRequestService(BuildingContext context, IMapper mapper)
+        public RentRequestService(BuildingContext context, INotificationService notificationService)
         {
             _context = context;
-            _mapper = mapper;
+            _notificationService = notificationService;
         }
 
         public async Task<BaseResponse> SendRentRequest(int userId, CreateRentRequest request)
@@ -36,10 +36,12 @@ namespace API.Services.Implements
                 ItemId = request.ItemId,
                 RenterId = userId,
                 NumberOfParent = request.NumberOfParent,
-                status = false,
+                Status = false,
             };
             _context.RentRequests.Add(newRent);
-            if (await _context.SaveChangesAsync() > 0)
+            int existRentRequest = (await _context.RentRequests.Where(r => r.ItemId == request.ItemId).ToListAsync()).Count();
+            var rs = await _notificationService.PostNotificatonForAccount(2, new CreateNotificationRequest { Title = "Gửi yêu cầu thuê thành công", Content = $"Bạn là người yêu cầu thuê thứ ${existRentRequest + 1}\\nChúng tôi sẽ liên lạc với bạn trong vòng 7 ngày" }, userId);
+            if (rs.IsSuccess == true)
                 return new BaseResponse { IsSuccess = true, Message = "Yêu cầu thành công" };
             return new BaseResponse { IsSuccess = false, Message = "Yêu cầu thất bại" };
         }
@@ -62,24 +64,25 @@ namespace API.Services.Implements
         {
             var item = await _context.Items.Include(i => i.Renter).FirstOrDefaultAsync(i => i.Id == request.ItemId && i.Status == EItemStatus.Rented && i.Renter.Id == userId);
             if (item == null)
-                return new BaseResponse { IsSuccess = false, Message = "Item không sở hữu" };
+                return new BaseResponse { IsSuccess = false, Message = "Item tài khoản không sở hữu" };
             UnRentRequest newUnRent = new UnRentRequest
             {
                 FullName = request.FullName,
                 CCCD = request.CCCD,
                 ItemId = request.ItemId,
                 RenterId = userId,
-                status = false,
+                Status = false,
             };
             _context.UnRentRequests.Add(newUnRent);
-            if (await _context.SaveChangesAsync() > 0)
+            var rs = await _notificationService.PostNotificatonForAccount(2, new CreateNotificationRequest { Title = "Gửi yêu cầu hủy thuê thành công", Content = $"Chúng tôi sẽ liên lạc với bạn trong vòng 7 ngày" }, userId);
+            if (rs.IsSuccess == true)
                 return new BaseResponse { IsSuccess = true, Message = "Yêu cầu thành công" };
             return new BaseResponse { IsSuccess = false, Message = "Yêu cầu thất bại" };
         }
 
         public async Task<DataResponse<PagedList<UnRentRequest>>> GetUnRentRequest(RentRequestParams param)
         {
-            var query = await _context.UnRentRequests.Status(param.Status).ToListAsync();
+            var query = await _context.UnRentRequests.Status(param.Status).OrderBy(ur => ur.CreateDate).ToListAsync();
 
             var response = PagedList<UnRentRequest>.ToPagedList(query,
                 param.PageNumber, param.PageSize);

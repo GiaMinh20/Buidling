@@ -8,6 +8,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Configuration;
 using System;
+using DinkToPdf.Contracts;
+using DinkToPdf;
 
 namespace API.Extensions
 {
@@ -26,20 +28,6 @@ namespace API.Extensions
 
                 if (env == "Development")
                 {
-                    // Use connection string from file.
-                    //connStr = config.GetConnectionString("DefaultConnection");
-                    //var connUrl = config.GetConnectionString("DefaultConnection");
-
-                    //connUrl = connUrl.Replace("postgres://", string.Empty);
-                    //var pgUserPass = connUrl.Split("@")[0];
-                    //var pgHostPortDb = connUrl.Split("@")[1];
-                    //var pgHostPort = pgHostPortDb.Split("/")[0];
-                    //var pgDb = pgHostPortDb.Split("/")[1];
-                    //var pgUser = pgUserPass.Split(":")[0];
-                    //var pgPass = pgUserPass.Split(":")[1];
-                    //var pgHost = pgHostPort.Split(":")[0];
-                    //var pgPort = pgHostPort.Split(":")[1];
-
                     connStr = $"Server=ec2-44-210-36-247.compute-1.amazonaws.com;Port=5432;User Id=bihbecwnmyyqce;Password=32f1b027b634fb4a638ff905723220418029dbd10be6a09ef429328ea3a1f2bc;Database=d1eipdobcleqf8;SSL Mode=Require;Trust Server Certificate=true";
                 }
                 else
@@ -83,6 +71,8 @@ namespace API.Extensions
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IStatisticService, StatisticService>();
             services.AddScoped<IExportDataService, ExportDataService>();
+            services.AddScoped<IPdfService, PdfService>();
+            services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
             return services;
         }
     }

@@ -7,11 +7,17 @@ using API.Payloads.Response;
 using API.Payloads.Response.BaseResponses;
 using API.Services.Interfaces;
 using AutoMapper;
+using DocumentFormat.OpenXml.Bibliography;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Mail;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -20,38 +26,45 @@ namespace API.Services.Implements
     public class AccountService : IAccountService
     {
         private readonly UserManager<Account> _userManager;
+        private readonly SignInManager<Account> _signInManager;
         private readonly ITokenService _tokenService;
         private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
         private readonly IMemberService _memberService;
         private readonly IImageService _imageService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly BuildingContext _context;
         public AccountService(UserManager<Account> userManager,
+            SignInManager<Account> signInManager,
             ITokenService tokenService,
             BuildingContext context,
             IEmailService emailService,
             IMapper mapper,
             IMemberService memberService,
-            IImageService imageService)
+            IImageService imageService,
+            IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _tokenService = tokenService;
             _userManager = userManager;
+            _signInManager = signInManager;
             _emailService = emailService;
             _mapper = mapper;
             _memberService = memberService;
             _imageService = imageService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         public async Task<DataResponse<RegisterResponse>> Register(RegisterRequest request)
         {
             var checkRequest = CheckExistAccount(request);
-            if (!checkRequest.IsCompleted)
+            if (!checkRequest.Result.IsSuccess)
                 return new DataResponse<RegisterResponse>
                 {
                     IsSuccess = false,
                     Message = checkRequest.Result.Message
                 };
+
             var newAcount = new Account
             {
                 UserName = request.Username,
@@ -133,6 +146,9 @@ namespace API.Services.Implements
         {
             var user = await _userManager.FindByNameAsync(request.Username);
             if (user == null || user.EmailConfirmed == false) return null;
+            var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
+
+            if (!result.Succeeded) return null;
             return new LoginResponse
             {
                 Username = user.UserName,
@@ -153,10 +169,20 @@ namespace API.Services.Implements
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            string url = $"https://localhost:5001/api/ResetPassword?email={email}&token={token}";
+            string url = $"https://buildingmanager.herokuapp.com/reset-password?email={email}&token={token}";
+            /* Template*/
+            var PathToTemplate = _webHostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
+            + "templates" + Path.DirectorySeparatorChar.ToString() +
+            "ForgotPassTemplate.html";
 
-            await _emailService.SendEmailAsync(email, "Reset Password", "<h1>Follow the instructions to reset your password</h1>" +
-                $"<p>To reset your password <a href='{url}'>Click here</a></p>");
+            string HtmlBody = "";
+            using (StreamReader sr = System.IO.File.OpenText(PathToTemplate))
+            {
+                HtmlBody = sr.ReadToEnd();
+            }
+            string messageBody = string.Format(HtmlBody, user.UserName, user.Email, url.ToString());
+
+            await _emailService.SendEmailAsync(email, "ResetPassword", messageBody, null);
 
             return new ForgetPasswordResponse
             {
@@ -202,19 +228,9 @@ namespace API.Services.Implements
         public async Task<ProfileResponse> GetProfile(string name)
         {
             var user = await _context.Users
-                    //.Include(a => a.Members)
-                    //.ThenInclude(m => m.PlaceOfOrigin)
-                    //.Include(a => a.Bills)
-                    //.Include(a => a.Items)
-                    //.Include(a => a.Vehicles)
                     .FirstOrDefaultAsync(x => x.UserName == name);
             if (user == null) return null;
             var response = _mapper.Map<ProfileResponse>(user);
-            //response.Members = _mapper.Map<List<PersonResponse>>(user.Members);
-            //foreach (var item in user.Items)
-            //{
-            //    response.ItemIds.Add(item.Id);
-            //}
 
             return response;
 
@@ -330,15 +346,35 @@ namespace API.Services.Implements
             if (request.Password != request.ConfirmPass)
                 return new BaseResponse
                 {
-                    Message = "Số điện thoại đã được sử dụng",
+                    Message = "Xác nhận mật khẩu sai",
                     IsSuccess = false,
                 };
+            //if (Regex.Match(request.PhoneNumber, @"^[0-9]+${9,11}").Success)
+            //{
+            //    return new BaseResponse
+            //    {
+            //        Message = "Số điện thoai không đúng định dạng",
+            //        IsSuccess = false,
+            //    };
+            //}
             return new BaseResponse
             {
                 IsSuccess = true
             };
         }
 
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
         private async Task<DataResponse<RegisterResponse>> CompleteRegister(IdentityResult result, Account newAcount)
         {
             if (!result.Succeeded)
@@ -353,13 +389,34 @@ namespace API.Services.Implements
             {
                 await _userManager.AddToRoleAsync(newAcount, "Member");
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(newAcount);
+                //var uriBuilder = new UriBuilder("https://buildingmanager-api.herokuapp.com/api/system/confirm-email");
                 var uriBuilder = new UriBuilder("https://localhost:5001/api/system/confirm-email");
+
                 var query = HttpUtility.ParseQueryString(uriBuilder.Query);
                 query["token"] = token;
                 query["userId"] = newAcount.Id.ToString();
                 uriBuilder.Query = query.ToString();
                 var urlString = uriBuilder.ToString();
-                await _emailService.SendEmailAsync(newAcount.Email, "ConfirmMemberEmail", $"<html><body><p>Chào {newAcount.UserName},</p><p>Vui lòng bấm vào liên kết để xác nhận email của bạn</p><a href=\"{urlString}\"><strong>Xác nhận Email</strong></a></body></html>");
+
+                /* Template*/
+                var PathToTemplate = _webHostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
+                + "templates" + Path.DirectorySeparatorChar.ToString() +
+                "EmailTemplate.html";
+
+                string HtmlBody = "";
+                using (StreamReader sr = System.IO.File.OpenText(PathToTemplate))
+                {
+                    HtmlBody = sr.ReadToEnd();
+                }
+                //Name: { 0}
+                //Email: { 1}
+                //Phone: { 2}
+
+                string messageBody = string.Format(HtmlBody, newAcount.UserName, newAcount.Email, newAcount.PhoneNumber, urlString);
+
+
+                //await _emailService.SendEmailAsync(newAcount.Email, "ConfirmMemberEmail", $"<html><body><p>Chào {newAcount.UserName},</p><p>Vui lòng bấm vào liên kết để xác nhận email của bạn</p><a href=\"{urlString}\"><strong>Xác nhận Email</strong></a></body></html>");
+                await _emailService.SendEmailAsync(newAcount.Email, "ConfirmMemberEmail", messageBody,null);
                 return new DataResponse<RegisterResponse>
                 {
                     Message = "Đăng ký thành công",
